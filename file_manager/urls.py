@@ -18,11 +18,15 @@ from file_manager import views
 
 
 urlpatterns = [
-    url('home/', views.home, name='home'),
-    url('dirs_list/', views.dir_list, name='dir_list'),
-    url('dirs/view/(?P<dir_name>.*?)/', views.dir_view, name='dir_view'),
-    url('file/upload/', views.upload, name='upload'),
-    url('file/rename/(?P<file_name>.*?)/', views.rename, name='upload'),
-    url('file/delete/(?P<file_name>.*?)/', views.delete, name='upload')
+    url('file/delete/$', views.FileDelete.as_view(), name='file_delete'),
+    url('file/upload/', views.FileUpload.as_view(), name='file_upload'),
+    url('dirs/view/(?P<dir_id>.*?)$', views.DIRView.as_view(), name='dir_view'),
+
+    # url('dirs_list/', views.dir_list, name='dir_list'),
+    url('file/download/(?P<file_id>.*?)$', views.FileDownload.as_view(), name='file_download'),
+    url('file/rename/(?P<file_id>.*?)$', views.rename, name='file_rename'),
+    # url('api/', include('file_manager.api.urls')),
+
+    url('$', views.FilesView.as_view(), name='home'),
 
 ]

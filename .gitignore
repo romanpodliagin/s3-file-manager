@@ -3,4 +3,5 @@
 
 .vscode
 *.pyc
-s3_file_manager/.env
+*.env
+static
