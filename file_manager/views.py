@@ -42,13 +42,13 @@ class DIRView(View):
                                         ~Q(id=kwargs['dir_id'])
                                         )
 
-        return render(self.request, 'home.html', {'filenames': filenames})
+        return render(self.request, 'dirs_view.html', {'filenames': filenames})
 
 
 class FilesView(View):
 
     def get(self, *args, **kwargs):
-        return render(self.request, 'home.html', {'filenames': File.objects.all()})
+        return render(self.request, 'home.html', {'filenames': File.objects.first_dirs()})
 
 
 class FileUpload(generics.CreateAPIView):
@@ -78,8 +78,9 @@ class FileDownload(View):
 
     def get(self, *args, **kwargs):
         file_id = kwargs['file_id']
-        file_object = File.objects.get(id=file_id)
-        file_name = file_object.aws_key
+        file_name = s3_client.get_model_attr_by_kwargs(model=File, kwargs={'id': file_id},
+                                                       attr_name='aws_key'
+                                                       )
         local_file_name = s3_client.download_file(file_name)
 
         f = open(local_file_name)
@@ -91,18 +92,33 @@ class FileDownload(View):
         return response
 
 
-@api_view()
-def rename(request, file_name):
-    return HttpResponse('U OK')
+class FileRename(generics.UpdateAPIView):
+
+    def post(self, request, format=None):
+        file_id = int(request.POST['file_id'])
+        file_name = request.POST['file_name']
+        new_file_name = request.POST['full_file_name']
+
+        if File.objects.filter(aws_key=new_file_name).exists():
+            return HttpResponse(json.dumps({'msg': 'File exists.'}),
+                                content_type="application/json", status=400)
+
+        if not file_name:
+            return HttpResponse(json.dumps({'msg': 'File Name cannot be empty.'}),
+                                content_type="application/json", status=400)
+
+        file_object = s3_client.get_model_by_kwargs(File, {'id': file_id})
+        file_object.rename_file(new_file_name)
+        context = {'File': new_file_name}
+        return HttpResponse(json.dumps(context), content_type="application/json")
 
 
 class FileDelete(generics.DestroyAPIView):
 
     def post(self, request, format=None):
         file_id = int(request.POST['file_id'])
-        file_object = File.objects.get(id=file_id)
+        file_object = s3_client.get_model_by_kwargs(File, {'id': file_id})
         file_name = file_object.aws_key
-        s3_client.delete_file(file_name)
         file_object.delete()
         context = {'File': file_name}
         return HttpResponse(json.dumps(context), content_type="application/json")

@@ -21,10 +21,10 @@ urlpatterns = [
     url('file/delete/$', views.FileDelete.as_view(), name='file_delete'),
     url('file/upload/', views.FileUpload.as_view(), name='file_upload'),
     url('dirs/view/(?P<dir_id>.*?)$', views.DIRView.as_view(), name='dir_view'),
+    url('file/rename/$', views.FileRename.as_view(), name='file_rename'),
 
     # url('dirs_list/', views.dir_list, name='dir_list'),
     url('file/download/(?P<file_id>.*?)$', views.FileDownload.as_view(), name='file_download'),
-    url('file/rename/(?P<file_id>.*?)$', views.rename, name='file_rename'),
     # url('api/', include('file_manager.api.urls')),
 
     url('$', views.FilesView.as_view(), name='home'),

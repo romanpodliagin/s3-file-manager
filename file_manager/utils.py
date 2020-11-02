@@ -5,6 +5,7 @@ from pathlib import Path
 import boto3
 from django.conf import settings
 from django.db import models
+from django.shortcuts import get_object_or_404
 
 SUFFIXES = {1000: ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
             1024: ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']}
@@ -60,6 +61,15 @@ class Util():
 
         return key_data
 
+    def get_model_attr_by_kwargs(self, model: models.Model, kwargs: dict, attr_name: str):
+        model_object = get_object_or_404(model, **kwargs)
+        attr = getattr(model_object, attr_name)
+        return attr
+
+    def get_model_by_kwargs(self, model: models.Model, kwargs: dict):
+        model_object = get_object_or_404(model, **kwargs)
+        return model_object
+
 
 class S3Client(Util):
     aws_access_key_id = settings.AWS_ACCESS_KEY_ID
@@ -97,6 +107,12 @@ class S3Client(Util):
 
     def delete_file(self, file_name):
         self.s3_client.delete_object(Key=file_name, Bucket=self.aws_storage_bucket_name)
+
+    def rename_file(self, aws_key: str, new_file_name: str):
+        self.s3_client.copy_object(Key=new_file_name,
+                                   CopySource={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': aws_key},
+                                   Bucket=self.aws_storage_bucket_name)
+        self.delete_file(aws_key)
 
     def create_bucket(self, bucket_name):
         self.s3_client.create_bucket(Bucket=bucket_name,

@@ -1,2 +1,54 @@
-{% extends 'home.html' %}
+{% extends 'base.html' %}
 {% load static %}
+{% block content %}
+{% csrf_token %}
+<div class="container form-group">
+    <button type="button" class="btn btn-outline-primary" onclick="history.back();">Back</button>
+</div>
+    <button type="button" class="close " data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+
+<div class="container">
+
+  <table class="table table-bordered table-striped text-center">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Name</th>
+        <th scope="col">Type</th>
+        <th scope="col">Size</th>
+        <th scope="col">Modified</th>
+        <th scope="col">Download</th>
+        <th scope="col">Rename</th>
+        <th scope="col">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for filename in filenames %}
+    <tr id="tr{{ filename.id }}">
+        <th scope="row">{{ forloop.counter }}</th>
+        {% if filename.type == 'DIR' %}
+        <td><a href="{% url 'dir_view' dir_id=filename.id %}" class="">{{ filename.aws_key }}</a></td>
+        {% else %}
+        <td>{{ filename.aws_key }}</td>
+        {% endif%}
+        <td>{{ filename.type }}</td>
+        <td>{{ filename.size }}</td>
+        <td>{{ filename.last_modified }}</td>
+        <td><a href="{% url 'file_download' file_id=filename.id %}" class="">Download</a></td>
+        <td><a href="{% url 'file_rename' file_id=filename.id %}" class="">Rename</a></td>
+        <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" language="javascript" src="{% static 'js/csrfSetUp.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/home.js' %}"></script>
+{% endblock %}

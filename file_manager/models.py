@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+from file_manager.managers import FileManger
 from file_manager.utils import S3Client
 
 s3_client = S3Client()
@@ -21,6 +22,8 @@ class File(models.Model):
     aws_last_modified = models.DateTimeField(null=True)
     aws_size = models.BigIntegerField(null=True)
     aws_data_updated = models.BooleanField(null=True)
+
+    objects = FileManger.as_manager()
 
     def __str__(self):
         return f'{self.bucket} <{self.aws_key}>'
@@ -45,3 +48,12 @@ class File(models.Model):
             s3_client.update_file_model_info(self, update_keys, Bucket)
             self.aws_data_updated = True
             self.save()
+
+    def rename_file(self, new_file_name):
+        s3_client.rename_file(self.aws_key, new_file_name)
+        self.aws_key = new_file_name
+        self.save()
+
+    def delete(self, using=None, keep_parents=False):
+        s3_client.delete_file(self.aws_key)
+        return super().delete(using=using, keep_parents=keep_parents)
