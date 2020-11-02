@@ -1,0 +1,20 @@
+version: "3.6"
+
+x-web-conf: &x-web-conf
+  PYTHONUNBUFFERED: 1
+  PDF_RENDERING_SERVICE_HOST: 'pdf-service:3000'
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment: *x-web-conf
+    env_file:
+      - s3_file_manager/.env
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/src:cached
+    ports:
+      - "8000:8000"
