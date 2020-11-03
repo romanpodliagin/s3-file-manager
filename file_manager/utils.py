@@ -71,7 +71,7 @@ class Util():
         return model_object
 
 
-class S3Client(Util):
+class S3Helper(Util):
     aws_access_key_id = settings.AWS_ACCESS_KEY_ID
     aws_secret_access_key = settings.AWS_SECRET_ACCESS_KEY
     aws_storage_bucket_name = settings.AWS_STORAGE_BUCKET_NAME

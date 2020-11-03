@@ -4,9 +4,19 @@ from __future__ import unicode_literals
 from django.db import models
 
 from file_manager.managers import FileManger
-from file_manager.utils import S3Client
+from file_manager.utils import S3Helper
 
-s3_client = S3Client()
+s3_helper = S3Helper()
+
+
+class Type:
+    FILE = 'FILE'
+    DIR = 'DIR'
+
+    CHOICES = (
+        (FILE, FILE),
+        (DIR, DIR)
+    )
 
 
 class Bucket(models.Model):
@@ -30,11 +40,22 @@ class File(models.Model):
 
     @property
     def type(self) -> str:
-        return self.aws_key.endswith('/') and 'DIR' or 'FILE'
+        return self.aws_key.endswith('/') and Type.DIR or Type.FILE
+
+    @property
+    def ext(self) -> str:
+        if self.type == Type.DIR:
+            ext = ''
+        elif '.' not in self.aws_key:
+            ext = ''
+        else:
+            ext = self.aws_key.rsplit('.', 1)[-1]
+            ext = f'.{ext}'
+        return ext
 
     @property
     def size(self) -> str:
-        return s3_client.approximate_size(self.aws_size)
+        return s3_helper.approximate_size(self.aws_size)
 
     @property
     def last_modified(self) -> str:
@@ -45,15 +66,19 @@ class File(models.Model):
 
     def update_attrs(self, update_keys: list):
         if not self.is_updated():
-            s3_client.update_file_model_info(self, update_keys, Bucket)
+            s3_helper.update_file_model_info(self, update_keys, Bucket)
             self.aws_data_updated = True
             self.save()
 
     def rename_file(self, new_file_name):
-        s3_client.rename_file(self.aws_key, new_file_name)
+        type_init = self.type
+        s3_helper.rename_file(self.aws_key, new_file_name)
         self.aws_key = new_file_name
-        self.save()
+        if type_init == self.type:
+            self.save()
+        else:
+            return {'msg': 'File Type Conflict.'}
 
     def delete(self, using=None, keep_parents=False):
-        s3_client.delete_file(self.aws_key)
+        s3_helper.delete_file(self.aws_key)
         return super().delete(using=using, keep_parents=keep_parents)

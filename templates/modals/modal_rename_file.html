@@ -1,36 +1,41 @@
-<!-- Rename File Modal -->
-<div class="modal fade" id="RenameModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="RenameModalLabel">Rename</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="input-group mb-5">
+{% for filename in filenames %}
 
-          <div class="input-group-prepend">
-              <span class="input-group-text" id="name">New Name</span>
+  <!-- Rename File Modal -->
+  <div class="modal fade" id="RenameModal_{{ filename.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="RenameModalLabel_{{ filename.id }}">Rename</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="input-group mb-5">
+
+            <form>
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="name_{{ filename.id }}">New Name</span>
             </div>
-            <input type="text" class="form-control" id="new_file_name"
+            <input type="text" class="form-control" id="new_file_name_{{ filename.id }}"
                    aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" required>
             <div class="input-group-append">
-              <span class="input-group-text" id="new_file_name_ext">.pdf</span>
+              <span class="input-group-text" id="new_file_name_ext_{{ filename.id }}">{{ filename.ext }}</span>
             </div>
+            </form>
+            <div class="container form-group">
+                <div class="alert alert-danger" id="alert_file_errors_{{ filename.id }}" role="alert"></div>
+              </div>
 
-          <div class="container form-group">
-              <div class="alert alert-danger" id="alert_file_errors" role="alert"></div>
-            </div>
+          </div>
 
         </div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" onclick="rename_file({{ filename.id }})" class="btn btn-primary">Save</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" onclick="rename_file({{ filename.id }})" class="btn btn-primary">Save</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+{% endfor %}
