@@ -21,7 +21,7 @@
     <tbody>
     {% for filename in filenames %}
 
-    {% include 'modals.html' with filename=filename %}
+    {% include 'modals/modal_rename_file.html' with filename=filename %}
 
     <tr id="tr{{ filename.id }}">
         <th scope="row">{{ forloop.counter }}</th>
@@ -53,5 +53,5 @@
 
 {% block js %}
 <script type="text/javascript" language="javascript" src="{% static 'js/csrfSetUp.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/home.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modal.js' %}"></script>
 {% endblock %}

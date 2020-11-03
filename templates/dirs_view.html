@@ -26,6 +26,9 @@
     </thead>
     <tbody>
     {% for filename in filenames %}
+
+    {% include 'modals/modal_rename_file.html' with filename=filename %}
+
     <tr id="tr{{ filename.id }}">
         <th scope="row">{{ forloop.counter }}</th>
         {% if filename.type == 'DIR' %}
@@ -37,7 +40,7 @@
         <td>{{ filename.size }}</td>
         <td>{{ filename.last_modified }}</td>
         <td><a href="{% url 'file_download' file_id=filename.id %}" class="">Download</a></td>
-        <td><a href="{% url 'file_rename' file_id=filename.id %}" class="">Rename</a></td>
+        <td><a type="button" data-toggle="modal" data-target="#RenameModal">Rename File</a>
         <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
       </tr>
       {% endfor %}

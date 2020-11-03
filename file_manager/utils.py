@@ -161,8 +161,12 @@ class S3Client(Util):
     def create_dir(self, dir_name, bucket_name=settings.AWS_STORAGE_BUCKET_NAME):
         dir_name = f'{dir_name}/'
         self.s3_client.put_object(Bucket=bucket_name, Key=dir_name)
+        return dir_name
 
     def update_file_model_info(self, model: models.Model, update_keys: list, Bucket: models.Model):
+        if not update_keys:
+            update_keys = [f.name for f in model._meta.fields]
+
         keys_data = self.load_objects_by_name(only_dirs=False)
 
         bucket, _ = Bucket.objects.get_or_create(name=keys_data['bucket'])
@@ -173,5 +177,8 @@ class S3Client(Util):
 
                 for update_key in update_keys:
                     aws_key_name = self.aws_file_model_keys_mapping.get(update_key, update_key)
+                    if not hasattr(model, update_key) or (aws_key_name not in key):
+                        continue
+
                     setattr(model, update_key, key[aws_key_name])
                     model.save()

@@ -20,24 +20,24 @@ from file_manager.utils import S3Client
 s3_client = S3Client()
 
 
-@api_view()
-def dir_list(request):
-    dirs = s3_client.list_dir()
-    dirs_dict = {}
-
-    for dir_name in dirs:
-        dirs_dict[dir_name] = {'dir_name': dir_name,
-                               'view': request.build_absolute_uri(f'/dirs/view/{dir_name}'),
-                               'delete': request.build_absolute_uri(f'/dirs/delete/{dir_name}')
-                               }
-
-    return Response([dirs_dict])
+# @api_view()
+# def dir_list(request):
+#     dirs = s3_client.list_dir()
+#     dirs_dict = {}
+#
+#     for dir_name in dirs:
+#         dirs_dict[dir_name] = {'dir_name': dir_name,
+#                                'view': request.build_absolute_uri(f'/dirs/view/{dir_name}'),
+#                                'delete': request.build_absolute_uri(f'/dirs/delete/{dir_name}')
+#                                }
+#
+#     return Response([dirs_dict])
 
 
 class DIRView(View):
 
     def get(self, *args, **kwargs):
-        dir_object = File.objects.get(id=kwargs['dir_id'])
+        dir_object = s3_client.get_model_by_kwargs(File, {'id': kwargs['dir_id']})
         filenames = File.objects.filter(Q(aws_key__contains=dir_object.aws_key),
                                         ~Q(id=kwargs['dir_id'])
                                         )
@@ -48,7 +48,7 @@ class DIRView(View):
 class FilesView(View):
 
     def get(self, *args, **kwargs):
-        return render(self.request, 'home.html', {'filenames': File.objects.first_dirs()})
+        return render(self.request, 'home.html', {'filenames': File.objects.order_by_type()})
 
 
 class FileUpload(generics.CreateAPIView):
@@ -92,20 +92,45 @@ class FileDownload(View):
         return response
 
 
-class FileRename(generics.UpdateAPIView):
+class BaseUpdateAPIView(generics.UpdateAPIView):
+
+    def check_filename(self, full_file_name, short_file_name):
+        if File.objects.filter(aws_key=full_file_name).exists():
+            return HttpResponse(json.dumps({'msg': 'File or DIR exists.'}),
+                                content_type="application/json", status=400)
+
+        if not short_file_name:
+            return HttpResponse(json.dumps({'msg': 'Name cannot be empty.'}),
+                                content_type="application/json", status=400)
+
+
+class DIRCreate(BaseUpdateAPIView):
+
+    def post(self, request, *args, **kwargs):
+        dir_name = request.POST['dir_name']
+
+        error_response = self.check_filename(full_file_name=f'{dir_name}/',
+                                             short_file_name=dir_name)
+        if error_response:
+            return error_response
+
+        s3_filename = s3_client.create_dir(dir_name)
+        new_file = File.objects.create(aws_key=s3_filename)
+        new_file.update_attrs(update_keys=[])
+        return HttpResponse('OK')
+
+
+class FileRename(BaseUpdateAPIView):
 
     def post(self, request, format=None):
         file_id = int(request.POST['file_id'])
         file_name = request.POST['file_name']
         new_file_name = request.POST['full_file_name']
 
-        if File.objects.filter(aws_key=new_file_name).exists():
-            return HttpResponse(json.dumps({'msg': 'File exists.'}),
-                                content_type="application/json", status=400)
-
-        if not file_name:
-            return HttpResponse(json.dumps({'msg': 'File Name cannot be empty.'}),
-                                content_type="application/json", status=400)
+        error_response = self.check_filename(full_file_name=new_file_name,
+                                             short_file_name=file_name)
+        if error_response:
+            return error_response
 
         file_object = s3_client.get_model_by_kwargs(File, {'id': file_id})
         file_object.rename_file(new_file_name)
@@ -122,8 +147,3 @@ class FileDelete(generics.DestroyAPIView):
         file_object.delete()
         context = {'File': file_name}
         return HttpResponse(json.dumps(context), content_type="application/json")
-
-
-@api_view()
-def create_dir(request):
-    return HttpResponse('U OK')
