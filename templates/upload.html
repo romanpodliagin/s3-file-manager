@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 
@@ -7,27 +8,46 @@
 </div>
 
 <div class="container">
+
     <div class="col">
         {% if alert %}
-
-        <div class="alert alert-warning alert-dismissible fade show alert-dark" role="alert">
-          <strong>{{ alert.msg }}</strong> {{ alert.filename }}.
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
+            <div class="alert alert-warning alert-dismissible fade show alert-dark" role="alert">
+              <strong>{{ alert.msg }}</strong> {{ alert.filename }}.
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
         {% endif %}
     </div>
+
     <form class="was-validated" method="POST" action="/file/upload/" enctype=multipart/form-data> {% csrf_token %}
 
-        <div class="custom-file">
-            <input type="file" class="custom-file-input" name="file" id="id_file">
-            <label class="custom-file-label" for="id_file">Choose file</label>
+        <div class="form-row">
+            <div class="input-group input-group-lg mb-3">
+
+                <div class="container"><label for="id_directory">Select Folder</label></div>
+                <select class="custom-select custom-select-lg mb-3" name="directory" id="id_directory">
+                </select>
+
+            </div>
         </div>
-          <button type="submit" class="btn btn-primary">Upload</button>
+
+        <div class="form-row mb-3">
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" name="file" id="id_file">
+                <label class="custom-file-label" for="id_file">Choose file</label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Upload</button>
 
     </form>
 </div>
 
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" language="javascript" src="{% static 'js/csrfSetUp.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/file_upload.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/modal/create_dir.js' %}"></script>
 {% endblock %}

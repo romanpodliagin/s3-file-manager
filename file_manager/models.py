@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from datetime import datetime, timezone
+
 from django.db import models
 
 from file_manager.managers import FileManger
@@ -26,8 +28,31 @@ class Bucket(models.Model):
         return f'<{self.name}>'
 
 
+class Directory(models.Model):
+    bucket = models.ForeignKey(Bucket, related_name='directories', on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=128)
+    
+    class Meta:
+        verbose_name_plural = 'Directories'
+        unique_together = ('bucket', 'name')
+
+    def __str__(self):
+        return f'<{self.bucket}> <{self.name}>'
+
+    @property
+    def last_updated_min(self):
+        q = self.files.order_by('-aws_last_modified')
+        if q:
+            last_file_timestamp = q.first().aws_last_modified
+            now = datetime.now(timezone.utc)
+            value = (now - last_file_timestamp).seconds
+            if value < 60:
+                return 1
+            return round(value / 60)
+
+
 class File(models.Model):
-    bucket = models.ForeignKey(Bucket, related_name='files', on_delete=models.CASCADE, null=True)
+    directory = models.ForeignKey(Directory, related_name='files', on_delete=models.CASCADE, null=True)
     aws_key = models.CharField(max_length=128)
     aws_last_modified = models.DateTimeField(null=True)
     aws_size = models.BigIntegerField(null=True)
@@ -35,8 +60,11 @@ class File(models.Model):
 
     objects = FileManger.as_manager()
 
+    class Meta:
+        unique_together = ('directory', 'aws_key')
+
     def __str__(self):
-        return f'{self.bucket} <{self.aws_key}>'
+        return f'{self.directory} <{self.aws_key}>'
 
     @property
     def type(self) -> str:

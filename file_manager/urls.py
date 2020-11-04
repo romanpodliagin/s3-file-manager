@@ -25,8 +25,8 @@ urlpatterns = [
 
     url('dirs/view/(?P<dir_id>.*?)$', views.DIRView.as_view(), name='dir_view'),
     url('dirs/create/$', views.DIRCreate.as_view(), name='dir_create'),
+    url('dirs/list/', views.DIRList.as_view(), name='dir_list'),
 
-    # url('dirs_list/', views.dir_list, name='dir_list'),
     # url('api/', include('file_manager.api.urls')),
 
     url('$', views.FilesView.as_view(), name='home'),

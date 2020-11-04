@@ -3,16 +3,21 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 
-from file_manager.models import File, Bucket
-
-
-class FileAdmin(admin.ModelAdmin):
-    model = File
+from file_manager.models import File, Bucket, Directory
 
 
 class BucketAdmin(admin.ModelAdmin):
     model = Bucket
 
 
-admin.site.register(File, FileAdmin)
+class DirectoryAdmin(admin.ModelAdmin):
+    model = Directory
+
+
+class FileAdmin(admin.ModelAdmin):
+    model = File
+
+
 admin.site.register(Bucket, BucketAdmin)
+admin.site.register(Directory, DirectoryAdmin)
+admin.site.register(File, FileAdmin)

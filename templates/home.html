@@ -5,52 +5,28 @@
 
 <div class="container">
 
-  <table class="table table-bordered table-striped text-center">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Name</th>
-        <th scope="col">Type</th>
-        <th scope="col">Size</th>
-        <th scope="col">Modified</th>
-        <th scope="col">View/Download</th>
-        <th scope="col">Rename</th>
-        <th scope="col">Delete</th>
-      </tr>
-    </thead>
-    <tbody>
+    <div class="card-columns">
 
-    {% include 'modals/modal_rename_file.html' with filenames=filenames %}
+        {% for filename in filenames %}
+            <div class="card">
+                <div class="card-body">
+                    <a href="{% url 'dir_view' dir_id=filename.id %}">
+                        <img src="{% static 'img/aws_s3_logo.png' %}" class="card-img-top">
+                    </a>
+                  <h5 class="card-title">
+                      <a href="{% url 'dir_view' dir_id=filename.id %}" class="">{{ filename.name }}</a>
+                  </h5>
+                  <p class="card-text">Total objects: {{ filename.files.count }}</p>
+                  <p class="card-text"><small class="text-muted">
+                      {% if filename.last_updated_min %}
+                        Last updated {{ filename.last_updated_min }} mins ago
+                      {% endif %}
 
-    {% for filename in filenames %}
-
-    <tr id="tr{{ filename.id }}">
-        <th scope="row">{{ forloop.counter }}</th>
-        {% if filename.type == 'DIR' %}
-        <td><a href="{% url 'dir_view' dir_id=filename.id %}" class="">{{ filename.aws_key }}</a></td>
-        {% else %}
-        <td>{{ filename.aws_key }}</td>
-        {% endif%}
-        <td>{{ filename.type }}</td>
-        <td>{{ filename.size }}</td>
-        <td>{{ filename.last_modified }}</td>
-        <td>
-            {% if filename.type != 'DIR' %}
-            <a href="{% url 'file_download' file_id=filename.id %}" class="">Download</a>
-            {% else %}
-            <a href="{% url 'dir_view' dir_id=filename.id %}" class="">View</a>
-            {% endif %}
-        </td>
-        <td>
-            {% if filename.type != 'DIR' %}
-            <a type="button" data-toggle="modal" data-target="#RenameModal_{{ filename.id }}">Rename</a>
-            {% endif %}
-        </td>
-        <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+                  </small></p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 
 </div>
 
@@ -58,5 +34,7 @@
 
 {% block js %}
 <script type="text/javascript" language="javascript" src="{% static 'js/csrfSetUp.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/modal.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modal/create_dir.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modal/rename_file.js' %}"></script>
+
 {% endblock %}

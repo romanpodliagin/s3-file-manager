@@ -4,51 +4,37 @@ from __future__ import unicode_literals
 import json
 
 from django.core.files import File as CFile
-from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.context_processors import csrf
 from django.views import View
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
 
 from file_manager.forms import FileUploadForm
-from file_manager.models import File
+from file_manager.models import File, Directory, Bucket
+from file_manager.serializers import DirectorySerializer
 from file_manager.utils import S3Helper
 
 s3_helper = S3Helper()
 
 
-# @api_view()
-# def dir_list(request):
-#     dirs = s3_helper.list_dir()
-#     dirs_dict = {}
-#
-#     for dir_name in dirs:
-#         dirs_dict[dir_name] = {'dir_name': dir_name,
-#                                'view': request.build_absolute_uri(f'/dirs/view/{dir_name}'),
-#                                'delete': request.build_absolute_uri(f'/dirs/delete/{dir_name}')
-#                                }
-#
-#     return Response([dirs_dict])
+class DIRList(generics.ListAPIView):
+    queryset = Directory.objects.all()
+    serializer_class = DirectorySerializer
 
 
 class DIRView(View):
 
     def get(self, *args, **kwargs):
-        dir_object = s3_helper.get_model_by_kwargs(File, {'id': kwargs['dir_id']})
-        filenames = File.objects.filter(Q(aws_key__contains=dir_object.aws_key),
-                                        ~Q(id=kwargs['dir_id'])
-                                        )
-
+        dir_object = s3_helper.get_model_by_kwargs(Directory, {'id': kwargs['dir_id']})
+        filenames = File.objects.filter(directory=dir_object).order_by('-aws_last_modified')
         return render(self.request, 'dirs_view.html', {'filenames': filenames})
 
 
 class FilesView(View):
 
     def get(self, *args, **kwargs):
-        return render(self.request, 'home.html', {'filenames': File.objects.order_by_type()})
+        return render(self.request, 'home.html', {'filenames': Directory.objects.all()})
 
 
 class FileUpload(generics.CreateAPIView):
@@ -64,9 +50,12 @@ class FileUpload(generics.CreateAPIView):
         form = FileUploadForm(request.POST, request.FILES)
         if form.is_valid():
             file_obj = request.FILES['file']
+            directory = request.POST['directory']
+            dir_object = s3_helper.get_model_by_kwargs(Directory, {'id': int(directory)})
+
             s3_filename = s3_helper.upload_file(file_obj)
 
-            new_file = File.objects.create(aws_key=s3_filename)
+            new_file = File.objects.create(aws_key=s3_filename, directory=dir_object)
             new_file.update_attrs(update_keys=['bucket', 'aws_last_modified', 'aws_size'])
 
             return render(request, 'upload.html', {'alert': {'msg': 'File successfully saved:',
@@ -111,9 +100,11 @@ class DIRCreate(BaseUpdateAPIView):
         if error_msg:
             return HttpResponse(json.dumps(error_msg), content_type="application/json", status=400)
 
+        bucket = s3_helper.get_model_by_kwargs(Bucket, {'name': s3_helper.aws_storage_bucket_name})
+
         s3_filename = s3_helper.create_dir(dir_name)
-        new_file = File.objects.create(aws_key=s3_filename)
-        new_file.update_attrs(update_keys=[])
+        new_dir = Directory.objects.create(name=s3_filename, bucket=bucket)
+        # new_file.update_attrs(update_keys=[])
         return HttpResponse('OK')
 
 
