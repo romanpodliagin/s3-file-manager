@@ -11,3 +11,6 @@ ADD . /src/
 
 RUN python manage.py migrate
 #RUN python manage.py load_models
+
+RUN python manage.py collectstatic --noinput
+RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('testuser', 'testuser@gmail.com', 'testpwd')" | python manage.py shell
