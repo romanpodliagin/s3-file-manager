@@ -31,7 +31,7 @@ class Bucket(models.Model):
 
 class Directory(models.Model):
     parent_directory = models.ForeignKey('self', related_name='nested_directories',
-                                         on_delete=models.CASCADE, null=True)
+                                         on_delete=models.CASCADE, null=True, blank=True)
     bucket = models.ForeignKey(Bucket, related_name='directories', on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=128)
     nested = models.BooleanField(default=False)
@@ -84,6 +84,16 @@ class Directory(models.Model):
             return self.name
         else:
             return self.parent_directory.get_full_dir_path() + self.name
+
+    def delete(self, using=None, keep_parents=False):
+        # Remove all files in current dirs
+        for file_object in self.files.all():
+            file_object.delete()
+
+        # Remove all files in sub dirs
+        for directory in self.nested_directories.all():
+            directory.delete()
+        return super().delete(using=using, keep_parents=keep_parents)
 
 
 class File(models.Model):

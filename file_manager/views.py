@@ -157,3 +157,14 @@ class FileDelete(generics.DestroyAPIView):
         file_object.delete()
         context = {'File': file_name}
         return HttpResponse(json.dumps(context), content_type="application/json")
+
+
+class DIRDelete(generics.DestroyAPIView):
+
+    def post(self, request, format=None):
+        dir_id = int(request.POST['dir_id'])
+        dir_object = s3_helper.get_model_by_kwargs(Directory, {'id': dir_id})
+        file_name = dir_object.name
+        dir_object.delete()
+        context = {'Directory removed': file_name}
+        return HttpResponse(json.dumps(context), content_type="application/json")
