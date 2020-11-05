@@ -124,6 +124,9 @@ class File(models.Model):
     def last_modified(self) -> str:
         return self.aws_last_modified.strftime('%m/%d/%Y %H:%M:%S')
 
+    def clean_name(self) -> str:
+        return f'{self.aws_key}'.replace(f'{self.directory.get_full_dir_path()}', '')
+
     def is_updated(self):
         return self.aws_data_updated and True or False
 

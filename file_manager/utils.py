@@ -92,7 +92,7 @@ class S3Helper(Util):
 
         return file_obj.name, filename
 
-    def upload_file_(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+    def upload_file(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
         """
         Old Version
         :param file_obj:
@@ -108,7 +108,7 @@ class S3Helper(Util):
         self.remove_local_file(full_filename)
         return s3_filename
 
-    def upload_file(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+    def upload_file_obj(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
         uuid_str = uuid.uuid4()
         s3_filename = f'{dir_name}{uuid_str}__{file_obj.name}'
         self.s3_client.upload_fileobj(Fileobj=file_obj, Key=s3_filename, Bucket=bucket_name)
@@ -121,8 +121,8 @@ class S3Helper(Util):
         self.s3_client.upload_fileobj(Fileobj=file_obj_data['data'], Key=s3_filename, Bucket=bucket_name)
         return s3_filename
 
-    def download_file(self, file_name, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
-        local_file_name = self.get_str_path(settings.UPLOAD_FILE_PATH, file_name)
+    def download_file(self, file_name: str, local_file_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+        local_file_name = self.get_str_path(settings.UPLOAD_FILE_PATH, local_file_name)
         self.s3_client.download_file(Filename=local_file_name, Key=file_name, Bucket=bucket_name)
         return local_file_name
 

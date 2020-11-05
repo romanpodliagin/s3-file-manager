@@ -74,7 +74,7 @@ class FileUpload(generics.CreateAPIView):
                                                                  'filename': file_obj.name}}
                               )
             else:
-                s3_filename = s3_helper.upload_file(file_obj, dir_object.name)
+                s3_filename = s3_helper.upload_file(file_obj, dir_object.get_full_dir_path())
                 new_file = File.objects.create(aws_key=s3_filename, directory=dir_object)
                 new_file.update_attrs(update_keys=['bucket', 'aws_last_modified', 'aws_size'])
 
@@ -87,13 +87,13 @@ class FileDownload(View):
 
     def get(self, *args, **kwargs):
         file_id = kwargs['file_id']
-        file_name = s3_helper.get_model_attr_by_kwargs(model=File, kwargs={'id': file_id},
-                                                       attr_name='aws_key'
-                                                       )
-        local_file_name = s3_helper.download_file(file_name)
-        f = open(local_file_name)
+        file_object = s3_helper.get_model_by_kwargs(model=File, kwargs={'id': file_id})
+        file_name = file_object.aws_key
+        local_file_name = s3_helper.download_file(file_name=file_name,
+                                                  local_file_name=file_object.clean_name())
+        f = open(local_file_name, 'rb')
         myFile = CFile(f)
-        content_type = mimetypes.guess_type(local_file_name, strict=True)
+        content_type = mimetypes.guess_type(local_file_name, strict=True)[0]
         response = HttpResponse(myFile, content_type=content_type)
         content = "attachment; filename=%s" % local_file_name
         response['Content-Disposition'] = content
