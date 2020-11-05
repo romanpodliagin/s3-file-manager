@@ -1,5 +1,6 @@
 import os
 import uuid
+import zipfile
 from pathlib import Path
 
 import boto3
@@ -91,13 +92,33 @@ class S3Helper(Util):
 
         return file_obj.name, filename
 
-    def upload_file(self, file_obj, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+    def upload_file_(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+        """
+        Old Version
+        :param file_obj:
+        :param dir_name:
+        :param bucket_name:
+        :return:
+        """
         filename, full_filename = self.save_file(file_obj)
 
         uuid_str = uuid.uuid4()
-        s3_filename = f'{uuid_str}__{filename}'
+        s3_filename = f'{dir_name}{uuid_str}__{filename}'
         self.s3_client.upload_file(Filename=full_filename, Key=s3_filename, Bucket=bucket_name)
         self.remove_local_file(full_filename)
+        return s3_filename
+
+    def upload_file(self, file_obj, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+        uuid_str = uuid.uuid4()
+        s3_filename = f'{dir_name}{uuid_str}__{file_obj.name}'
+        self.s3_client.upload_fileobj(Fileobj=file_obj, Key=s3_filename, Bucket=bucket_name)
+        return s3_filename
+
+    def upload_zip_file(self, file_obj_data: dict, dir_name: str, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
+        uuid_str = uuid.uuid4()
+        file_obj_name = file_obj_data['file_obj_name']
+        s3_filename = f'{dir_name}{uuid_str}__{file_obj_name}'
+        self.s3_client.upload_fileobj(Fileobj=file_obj_data['data'], Key=s3_filename, Bucket=bucket_name)
         return s3_filename
 
     def download_file(self, file_name, bucket_name=settings.AWS_STORAGE_BUCKET_NAME) -> str:
@@ -182,3 +203,28 @@ class S3Helper(Util):
 
                     setattr(model, update_key, key[aws_key_name])
                     model.save()
+
+    def load_zip_file(self, file_obj) -> tuple:
+        file_content = self.unpack_zip_file(file_obj)
+        return file_content
+
+    def unpack_zip_file(self, file_obj) -> dict:
+        try:
+            print(f'Trying Load ZIP from `{file_obj.name}`')
+            opened = zipfile.ZipFile(file_obj)
+            file_obj_data = []
+            for zip_filename in opened.infolist():
+                content = opened.open(zip_filename.filename)
+                if not zip_filename.is_dir():
+                    if '/' in zip_filename.filename:
+                        dir_name, file_obj_name = zip_filename.filename.rsplit('/', 1)
+                        dir_name = f'{dir_name}/'
+                    else:
+                        file_obj_name = zip_filename.filename
+                        dir_name = ''
+                    file_obj_data.append({'file_obj_name': file_obj_name, 'data': content, 'dir_name': dir_name})
+
+            return file_obj_data
+
+        except zipfile.BadZipfile:
+            return

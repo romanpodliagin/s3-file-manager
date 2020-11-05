@@ -1,6 +1,8 @@
 $(document).ready(function() {
     $('.alert').alert();
 
+    $('#alert_create_dir_errors').hide();
+
 });
 
 function create_dir() {

@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime, timezone
+from typing import Optional
 
 from django.db import models
 
@@ -29,15 +30,20 @@ class Bucket(models.Model):
 
 
 class Directory(models.Model):
+    parent_directory = models.ForeignKey('self', related_name='nested_directories',
+                                         on_delete=models.CASCADE, null=True)
     bucket = models.ForeignKey(Bucket, related_name='directories', on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=128)
-    
+    nested = models.BooleanField(default=False)
+
     class Meta:
         verbose_name_plural = 'Directories'
         unique_together = ('bucket', 'name')
 
     def __str__(self):
-        return f'<{self.bucket}> <{self.name}>'
+        if self.nested:
+            return f'{self.parent_directory} <{self.name}>'
+        return f'{self.bucket} <{self.name}>'
 
     @property
     def last_updated_min(self):
@@ -49,6 +55,35 @@ class Directory(models.Model):
             if value < 60:
                 return 1
             return round(value / 60)
+
+    def get_or_create_nested_directory(self, dir_name: str) -> Optional['Directory']:
+        q = Directory.objects.filter(bucket=self.bucket, parent_directory=self,
+                                     name=dir_name,
+                                     nested=True)
+        if q:
+            return q[0]
+
+        nested_dirs = dir_name.split('/')
+        assert any(nested_dirs)
+        nested_dir = None
+        parent_dir = self
+        for nested_dir_name in nested_dirs:
+            if not nested_dir_name:
+                continue
+            nested_dir_name = f'{nested_dir_name}/'
+            nested_dir, _ = Directory.objects.get_or_create(bucket=self.bucket,
+                                                            parent_directory=parent_dir,
+                                                            name=nested_dir_name,
+                                                            nested=True)
+            parent_dir = nested_dir
+        print(f'created new nested_dir {nested_dir.get_full_dir_path()}')
+        return nested_dir
+
+    def get_full_dir_path(self):
+        if not self.parent_directory:
+            return self.name
+        else:
+            return self.parent_directory.get_full_dir_path() + self.name
 
 
 class File(models.Model):
@@ -99,6 +134,9 @@ class File(models.Model):
             self.save()
 
     def rename_file(self, new_file_name):
+        if not new_file_name.startswith(self.directory.name):
+            new_file_name = f'{self.directory.name}{new_file_name}'
+
         type_init = self.type
         s3_helper.rename_file(self.aws_key, new_file_name)
         self.aws_key = new_file_name

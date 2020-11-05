@@ -29,6 +29,6 @@ function rename_file(file_id) {
         },
     }).done(function(response) {
         console.log('success');
-//        window.location.href = '/';
+        window.location.href = '/';
     });
 }

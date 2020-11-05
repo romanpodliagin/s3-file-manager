@@ -10,4 +10,4 @@ RUN pip3 install -r requirements.txt
 ADD . /src/
 
 RUN python manage.py migrate
-RUN python manage.py load_models
+#RUN python manage.py load_models

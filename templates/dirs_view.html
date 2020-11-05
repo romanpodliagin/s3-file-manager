@@ -5,9 +5,6 @@
 <div class="container form-group">
     <button type="button" class="btn btn-outline-primary" onclick="history.back();">Back</button>
 </div>
-    <button type="button" class="close " data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
 
 <div class="container">
 
@@ -28,25 +25,35 @@
 
     {% include 'modals/modal_rename_file.html' with filenames=filenames %}
 
+    {% for nested_dir in nested_dirs %}
+            <tr id="dir_{{ nested_dir.id }}">
+                <th scope="row">#</th>
+                <td><a href="{% url 'dir_view' dir_id=nested_dir.id %}" class="">{{ nested_dir.name }}</a></td>
+                <td>DIR</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
+            </tr>
+    {% endfor %}
+
     {% for filename in filenames %}
 
-    <tr id="tr{{ filename.id }}">
-        <th scope="row">{{ forloop.counter }}</th>
-        {% if filename.type == 'DIR' %}
-        <td><a href="{% url 'dir_view' dir_id=filename.id %}" class="">{{ filename.aws_key }}</a></td>
-        {% else %}
-        <td>{{ filename.aws_key }}</td>
-        {% endif%}
-        <td>{{ filename.type }}</td>
-        <td>{{ filename.size }}</td>
-        <td>{{ filename.last_modified }}</td>
-        <td><a href="{% url 'file_download' file_id=filename.id %}" class="">Download</a></td>
-        <td>
-            <a type="button" data-toggle="modal" data-target="#RenameModal_{{ filename.id }}">Rename</a>
-        </td>
-        <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
-      </tr>
-      {% endfor %}
+        <tr id="tr{{ filename.id }}">
+            <th scope="row">{{ forloop.counter }}</th>
+            <td>{{ filename.aws_key }}</td>
+            <td>{{ filename.type }}</td>
+            <td>{{ filename.size }}</td>
+            <td>{{ filename.last_modified }}</td>
+            <td><a href="{% url 'file_download' file_id=filename.id %}" class="">Download</a></td>
+            <td>
+                <a type="button" data-toggle="modal" data-target="#RenameModal_{{ filename.id }}">Rename</a>
+            </td>
+            <td><a type="button" onclick="delete_file({{ filename.id }})" class="">Delete</a></td>
+        </tr>
+
+    {% endfor %}
     </tbody>
   </table>
 
@@ -56,5 +63,6 @@
 
 {% block js %}
 <script type="text/javascript" language="javascript" src="{% static 'js/csrfSetUp.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/modal.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modal/create_dir.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modal/rename_file.js' %}"></script>
 {% endblock %}
