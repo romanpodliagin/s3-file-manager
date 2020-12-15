@@ -2,6 +2,8 @@
     * Upload, Rename, Delete Files
     * Upload Zipped File and Unzip with nested files/directories
 
+![Alt text](images/s3.png?raw=true "S3FM")
+
 # How to install
 # Docker
      # Set Env
