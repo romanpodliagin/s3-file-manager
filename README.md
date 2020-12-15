@@ -1,3 +1,8 @@
+# S3 File Manager
+    * Upload, Rename, Delete Files
+    * Upload Zipped File and Unzip with nested files/directories
+
+# How to install
 # Docker
      # Set Env
      * cp envs/.env.template s3_file_manager/.env

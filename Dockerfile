@@ -1,6 +1,8 @@
 FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 
+RUN apt-get update && apt-get install nano -y
+
 RUN mkdir /src
 WORKDIR /src
 ADD requirements.txt /src/
